@@ -1,0 +1,379 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - TRUSTER{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+<style>
+.dashboard-card {
+    border: none;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.bg-gradient-primary { background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); }
+.bg-gradient-success { background: linear-gradient(135deg, var(--success-color), #059669); }
+.bg-gradient-warning { background: linear-gradient(135deg, var(--warning-color), #d97706); }
+.bg-gradient-info { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-3">Admin Dashboard</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="card-title text-muted mb-2">Total Properties</h6>
+                            <h2 class="mb-0">{{ total_properties }}</h2>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up"></i> 12% increase
+                            </small>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stat-icon bg-gradient-primary">
+                                <i class="fas fa-home"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="card-title text-muted mb-2">Featured Properties</h6>
+                            <h2 class="mb-0">{{ featured_properties }}</h2>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up"></i> 8% increase
+                            </small>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stat-icon bg-gradient-success">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="card-title text-muted mb-2">New Inquiries</h6>
+                            <h2 class="mb-0">{{ recent_inquiries }}</h2>
+                            <small class="text-warning">
+                                <i class="fas fa-clock"></i> Needs attention
+                            </small>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stat-icon bg-gradient-warning">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="card-title text-muted mb-2">Active Agents</h6>
+                            <h2 class="mb-0">8</h2>
+                            <small class="text-info">
+                                <i class="fas fa-users"></i> All active
+                            </small>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stat-icon bg-gradient-info">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">Property Listings Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="propertyChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">Property Types</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="propertyTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Recent Properties</h5>
+                    <a href="{% url 'admin_properties' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Type</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                    <th>Date Added</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Sample data - will be populated from backend -->
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary rounded me-3" style="width: 40px; height: 40px;"></div>
+                                            <div>
+                                                <div class="fw-bold">Modern Villa in Dhaka</div>
+                                                <small class="text-muted">Mirpur Dohs, Dhaka</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>Villa</td>
+                                    <td>$450,000</td>
+                                    <td><span class="badge bg-success">Available</span></td>
+                                    <td>2024-01-15</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-success rounded me-3" style="width: 40px; height: 40px;"></div>
+                                            <div>
+                                                <div class="fw-bold">Downtown Apartment</div>
+                                                <small class="text-muted">Gulshan, Dhaka</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>Apartment</td>
+                                    <td>$280,000</td>
+                                    <td><span class="badge bg-warning">Pending</span></td>
+                                    <td>2024-01-14</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Recent Inquiries</h5>
+                    <a href="{% url 'admin_inquiries' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 14px;">
+                            JD
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">John Doe</div>
+                            <small class="text-muted">Interested in Modern Villa</small>
+                            <div class="text-muted small">2 hours ago</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="bg-success rounded-circle me-3 d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 14px;">
+                            SM
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">Sarah Miller</div>
+                            <small class="text-muted">Requesting viewing for apartment</small>
+                            <div class="text-muted small">5 hours ago</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-start">
+                        <div class="bg-warning rounded-circle me-3 d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; font-size: 14px;">
+                            MJ
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">Mike Johnson</div>
+                            <small class="text-muted">Making an offer on house</small>
+                            <div class="text-muted small">1 day ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'admin_property_add' %}" class="btn btn-outline-primary w-100 py-3">
+                                <i class="fas fa-plus-circle fa-2x mb-2 d-block"></i>
+                                Add Property
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'admin_properties' %}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-list fa-2x mb-2 d-block"></i>
+                                Manage Properties
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'admin_inquiries' %}" class="btn btn-outline-warning w-100 py-3">
+                                <i class="fas fa-envelope fa-2x mb-2 d-block"></i>
+                                View Inquiries
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'admin_analytics' %}" class="btn btn-outline-info w-100 py-3">
+                                <i class="fas fa-chart-bar fa-2x mb-2 d-block"></i>
+                                Analytics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Property Chart
+    const propertyCtx = document.getElementById('propertyChart').getContext('2d');
+    new Chart(propertyCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Properties Listed',
+                data: [12, 19, 15, 25, 22, 30],
+                borderColor: 'rgb(37, 99, 235)',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Property Type Chart
+    const typeCtx = document.getElementById('propertyTypeChart').getContext('2d');
+    new Chart(typeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Houses', 'Apartments', 'Villas', 'Commercial'],
+            datasets: [{
+                data: [45, 25, 20, 10],
+                backgroundColor: [
+                    'rgb(37, 99, 235)',
+                    'rgb(16, 185, 129)',
+                    'rgb(245, 158, 11)',
+                    'rgb(239, 68, 68)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

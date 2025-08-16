@@ -1,0 +1,4 @@
+CLOUD_NAME ="dffvdfinm"
+API_KEY = '837384962224432'
+API_SECRET = 'HmlckVjUa4-HT2MhVmm3QmukllA'
+API_ENV_VARIABLE = 'CLOUDINARY_URL=cloudinary://837384962224432:HmlckVjUa4-HT2MhVmm3QmukllA@dffvdfinm'

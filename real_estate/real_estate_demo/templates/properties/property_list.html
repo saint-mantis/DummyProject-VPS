@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Properties - TRUSTER{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="mb-3">Available Properties</h1>
+            <p class="text-muted">
+                {% if properties %}
+                    Showing {{ properties|length }} of {{ paginator.count }} properties
+                {% else %}
+                    No properties found
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-lg-4">
+            <!-- View Toggle -->
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary active" id="grid-view">
+                    <i class="fas fa-th-large"></i> Grid
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="list-view">
+                    <i class="fas fa-list"></i> List
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Property Type</label>
+                            <select class="form-select" name="type">
+                                <option value="">All Types</option>
+                                {% for property_type in property_types %}
+                                    <option value="{{ property_type.slug }}" 
+                                            {% if request.GET.type == property_type.slug %}selected{% endif %}>
+                                        {{ property_type.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Location</label>
+                            <select class="form-select" name="location">
+                                <option value="">All Locations</option>
+                                {% for location in locations %}
+                                    <option value="{{ location.slug }}" 
+                                            {% if request.GET.location == location.slug %}selected{% endif %}>
+                                        {{ location.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Min Price</label>
+                            <input type="number" class="form-control" name="min_price" 
+                                   value="{{ request.GET.min_price }}" placeholder="$0">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Max Price</label>
+                            <input type="number" class="form-control" name="max_price" 
+                                   value="{{ request.GET.max_price }}" placeholder="Any">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Properties Grid -->
+    <div id="properties-container">
+        {% if properties %}
+            <div class="row" id="properties-grid">
+                {% for property in properties %}
+                <div class="col-lg-4 col-md-6 mb-4 property-item">
+                    <div class="property-card">
+                        {% if property.get_primary_image %}
+                            <div class="property-card-image" style="background-image: url('{{ property.get_primary_image.url }}');">
+                        {% else %}
+                            {% cycle 'static/images/properties/4b64c203-cc2e-4621-8f78-9e8e0965a66e.jpg' 'static/images/properties/05652eb8-ff6a-4a9f-9b07-128007270bda.jpg' 'static/images/properties/Gemini_Generated_Image_mjqm8ymjqm8ymjqm.png' 'static/images/properties/Gemini_Generated_Image_nltx7snltx7snltx.png' as property_image %}
+                            <div class="property-card-image" style="background-image: url('{% static property_image %}');">
+                        {% endif %}
+                            <div class="property-card-badge">{{ property.listing_type|capfirst }}</div>
+                            <button class="btn btn-sm btn-light favorite-btn position-absolute" 
+                                    style="top: 1rem; right: 1rem;" 
+                                    data-property-id="{{ property.id }}">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="property-card-body">
+                            <h5 class="property-card-title">{{ property.title }}</h5>
+                            <p class="property-card-location">
+                                <i class="fas fa-map-marker-alt me-2"></i>{{ property.location.name }}
+                            </p>
+                            <div class="property-card-price">${{ property.price|floatformat:0 }}</div>
+                            <div class="property-card-features">
+                                <div class="property-feature">
+                                    <i class="fas fa-bed"></i>{{ property.bedrooms }} bed
+                                </div>
+                                <div class="property-feature">
+                                    <i class="fas fa-bath"></i>{{ property.bathrooms }} bath
+                                </div>
+                                <div class="property-feature">
+                                    <i class="fas fa-ruler-combined"></i>{{ property.area_sqft }} sqft
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ property.get_absolute_url }}" class="btn btn-primary flex-fill">
+                                    View Details
+                                </a>
+                                <button class="btn btn-outline-primary" data-bs-toggle="modal" 
+                                        data-bs-target="#contactModal" data-property="{{ property.title }}">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="row">
+                <div class="col-12">
+                    <nav aria-label="Property pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}">First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}">Previous</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                            </li>
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}">Last</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <!-- No Properties Found -->
+            <div class="text-center py-5">
+                <i class="fas fa-home fa-4x text-muted mb-4"></i>
+                <h3 class="text-muted">No properties found</h3>
+                <p class="text-muted mb-4">Try adjusting your search criteria or browse all properties.</p>
+                <a href="{% url 'property_list' %}" class="btn btn-primary">View All Properties</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="contactModalLabel">Contact Agent</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="contact-form" action="{% url 'contact_agent' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="phone" name="phone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+                    </div>
+                    <input type="hidden" id="property_title" name="property_title">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    const gridView = document.getElementById('grid-view');
+    const listView = document.getElementById('list-view');
+    const propertiesGrid = document.getElementById('properties-grid');
+    
+    gridView.addEventListener('click', function() {
+        gridView.classList.add('active');
+        listView.classList.remove('active');
+        propertiesGrid.className = 'row';
+        document.querySelectorAll('.property-item').forEach(item => {
+            item.className = 'col-lg-4 col-md-6 mb-4 property-item';
+        });
+    });
+    
+    listView.addEventListener('click', function() {
+        listView.classList.add('active');
+        gridView.classList.remove('active');
+        propertiesGrid.className = 'row';
+        document.querySelectorAll('.property-item').forEach(item => {
+            item.className = 'col-12 mb-4 property-item';
+        });
+    });
+    
+    // Contact modal functionality
+    const contactModal = document.getElementById('contactModal');
+    if (contactModal) {
+        contactModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const propertyTitle = button.getAttribute('data-property');
+            const propertyInput = contactModal.querySelector('#property_title');
+            propertyInput.value = propertyTitle;
+            
+            const messageTextarea = contactModal.querySelector('#message');
+            messageTextarea.value = `Hi, I'm interested in the property: ${propertyTitle}. Please contact me for more information.`;
+        });
+    }
+    
+    // Initialize contact form
+    initializeContactForm();
+});
+</script>
+{% endblock %}

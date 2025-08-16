@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Server Error - TRUSTER{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center">
+        <div class="error-page">
+            <h1 class="display-1 fw-bold text-warning">500</h1>
+            <h2 class="mb-4">Internal Server Error</h2>
+            <p class="lead text-muted mb-4">
+                Something went wrong on our end. We're working to fix this issue as quickly as possible.
+            </p>
+            
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">What happened?</h5>
+                            <p class="mb-0">
+                                Our servers encountered an unexpected error while processing your request. 
+                                Our technical team has been automatically notified.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-home me-2"></i>Go Home
+                </a>
+                <button onclick="window.location.reload()" class="btn btn-outline-warning btn-lg">
+                    <i class="fas fa-redo me-2"></i>Try Again
+                </button>
+                <button onclick="history.back()" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Go Back
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 60px 20px;
+}
+
+.error-page .display-1 {
+    font-size: 8rem;
+    line-height: 1;
+    text-shadow: 2px 2px 4px rgba(245, 158, 11, 0.1);
+}
+
+@media (max-width: 768px) {
+    .error-page .display-1 {
+        font-size: 6rem;
+    }
+    
+    .error-page {
+        padding: 40px 10px;
+    }
+}
+</style>
+{% endblock %}
